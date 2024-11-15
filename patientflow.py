@@ -8,6 +8,37 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
+@st.cache_data
+def load_sample_data():
+    """Load pre-generated sample data"""
+    # Generate sample data
+    n_records = 1000
+    np.random.seed(42)
+    
+    dates = pd.date_range(start='2023-01-01', periods=n_records)
+    
+    df = pd.DataFrame({
+        'appointment_id': range(1, n_records + 1),
+        'patient_id': np.random.randint(1000, 9999, n_records),
+        'date': dates,
+        'appointment_type': np.random.choice(
+            ['Consultation', 'Follow-up', 'Procedure', 'Check-up'], 
+            n_records
+        ),
+        'department': np.random.choice(
+            ['Cardiology', 'Orthopedics', 'General Medicine', 'Pediatrics'], 
+            n_records
+        ),
+        'scheduled_duration': np.random.randint(15, 60, n_records),
+        'actual_duration': np.random.randint(15, 90, n_records),
+        'wait_time': np.random.randint(0, 30, n_records),
+        'no_show': np.random.choice([0, 1], n_records, p=[0.9, 0.1]),
+        'provider_id': np.random.randint(100, 999, n_records),
+        'time_slot': np.random.choice(['morning', 'afternoon', 'evening'], n_records)
+    })
+    
+    return df
+
 class PatientFlowOptimizer:
     def __init__(self):
         self.data = None
@@ -212,14 +243,30 @@ page = st.sidebar.selectbox(
 
 # Data Upload Page
 if page == 'Data Upload':
-    st.title("Patient Flow Data Upload")
-    uploaded_file = st.file_uploader("Upload EHR Data (CSV)", type=['csv'])
+    st.title("Data Upload")
     
-    if uploaded_file is not None:
-        if st.session_state.optimizer.load_data(uploaded_file):
-            st.success("Data loaded successfully!")
-            st.write("Data Preview:")
-            st.write(st.session_state.optimizer.data.head())
+    # Add option to use sample data
+    use_sample = st.checkbox("Use sample data", value=True)
+    
+    if use_sample:
+        if 'optimizer' not in st.session_state:
+            st.session_state.optimizer = PatientFlowOptimizer()
+        
+        sample_data = load_sample_data()
+        st.session_state.optimizer.data = sample_data
+        st.success("Sample data loaded successfully!")
+        
+        # Display sample data preview
+        st.subheader("Sample Data Preview")
+        st.dataframe(sample_data.head())
+    else:
+        # Your existing file upload code
+        uploaded_file = st.file_uploader("Upload patient data (CSV)", type=['csv'])
+        if uploaded_file is not None:
+            if st.session_state.optimizer.load_data(uploaded_file):
+                st.success("Data loaded successfully!")
+                st.write("Data Preview:")
+                st.write(st.session_state.optimizer.data.head())
         
 # Pattern Analysis Page
 elif page == 'Pattern Analysis':
