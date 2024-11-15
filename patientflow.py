@@ -118,7 +118,7 @@ class PatientFlowOptimizer:
         """Predict appointment duration based on various factors"""
         try:
             if self.model is None:
-                # Use the actual columns from your data
+                # Use the actual columns from data
                 features = ['appointment_type', 'time_slot', 'department']
                 
                 # Prepare features for training
